@@ -14,4 +14,8 @@ A quick toolkit to turn your wish-log Excel into insights and predictions for th
 	•	model_training.py - XGBoost classifier/regressor training
 	•	predict_console.py - real-time next-Radiance chance & cost
 	•	requirements.txt - all necessary Python packages
-	•	data/ - put your .xlsx logs here
+	•	data/ - put your .xlsx logs her
+   **Removed Components**  
+`streamlit_app.py` has been **removed** in favor of the lightweight console-based predictor (`predict_console.py`).  
+If you need a web dashboard in the future, feel free to reintroduce a Streamlit or Flask app in a separate branch.
+
