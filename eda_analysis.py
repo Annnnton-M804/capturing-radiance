@@ -77,7 +77,7 @@ def run_eda():
     colors = df5['is_up'].map({True: 'C1', False: 'C0'})  # C1=UP, C0=NOT-UP
 
     plt.figure(figsize=(8,4))
-    plt.hist(df5['pull_number'], bins=30, edgecolor='black', alpha=0.7)
+    plt.hist(df5['pity_number'], bins=30, edgecolor='black', alpha=0.7)
     plt.xlabel("Pull Number (Pity)")
     plt.ylabel("Count")
     plt.title("Distribution of 5★ Pulls")

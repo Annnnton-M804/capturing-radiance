@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Database Layer:
-Create a local SQLite database and set up the wish_logs table with indexes.
+Initialize the SQLite database and create indexes dynamically
+based on detected column names in the wish_logs table.
 """
 
 import sqlite3
@@ -11,34 +11,50 @@ import sqlite3
 DB_FILE = 'wish_logs.db'
 
 def init_db():
-    # Connect to (or create) the SQLite database file
+    # Connect to the SQLite database (creates file if not exists)
     conn = sqlite3.connect(DB_FILE)
     cur  = conn.cursor()
 
-    # Create table to store each pull
+    # 1) Ensure the table exists (dummy structure if needed)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS wish_logs (
-        pull_id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        account_id      TEXT    NOT NULL,
-        banner_id       TEXT    NOT NULL,
-        pull_number     INTEGER NOT NULL,
-        rarity          INTEGER NOT NULL,
-        character       TEXT,
-        is_fate_capture BOOLEAN DEFAULT 0,
-        primogem_cost   INTEGER,
-        timestamp       TEXT    NOT NULL,
-        is_up           BOOLEAN,
-        is_not_up       BOOLEAN
+      dummy_col INTEGER
     );
     """)
 
-    # Add indexes for faster queries on pity and not-up flags
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_pity   ON wish_logs(pull_number);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_not_up ON wish_logs(is_not_up);")
+    # 2) Retrieve actual column names from wish_logs
+    cur.execute("PRAGMA table_info(wish_logs);")
+    cols = [row[1] for row in cur.fetchall()]
 
+    # 3) Define possible names for pity and non-up flags
+    pity_candidates    = ['pull_number', 'pity_number', 'within_pity', 'within pity']
+    non_up_candidates  = ['is_not_up', 'non_up', 'not_up']
+
+    # 4) Select the first matching column name for each category
+    pity_col   = next((c for c in pity_candidates if c in cols), None)
+    non_up_col = next((c for c in non_up_candidates if c in cols), None)
+
+    # 5) Drop old indexes if they exist to avoid conflicts
+    cur.execute("DROP INDEX IF EXISTS idx_pity;")
+    cur.execute("DROP INDEX IF EXISTS idx_non_up;")
+
+    # 6) Create new indexes on the detected columns
+    if pity_col:
+        cur.execute(f"CREATE INDEX IF NOT EXISTS idx_pity ON wish_logs({pity_col});")
+        print(f"✅ Created index idx_pity on column '{pity_col}'")
+    else:
+        print("⚠️  No pity-like column found; idx_pity skipped.")
+
+    if non_up_col:
+        cur.execute(f"CREATE INDEX IF NOT EXISTS idx_non_up ON wish_logs({non_up_col});")
+        print(f"✅ Created index idx_non_up on column '{non_up_col}'")
+    else:
+        print("⚠️  No non-UP flag column found; idx_non_up skipped.")
+
+    # Commit changes and close connection
     conn.commit()
     conn.close()
-    print(f"✅ Initialized SQLite database at '{DB_FILE}'")
+    print(f"🎉 Database initialized and indexes created in '{DB_FILE}'")
 
 if __name__ == '__main__':
     init_db()
